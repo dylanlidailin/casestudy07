@@ -1,69 +1,44 @@
-from flask import Flask, request, jsonify
-import os
-import json
-from datetime import datetime
+from flask import Flask, request, jsonify, render_template
+from azure.storage.blob import BlobServiceClient
 
+# Azure Blob Storage setup
+CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=case7dfe4yx;AccountKey=n0sxzNZCzr7Clx5EHqDQV6tP6P5RCxyEeRu0mAD+2PGOMLWnh9gJtzyJh/T29j4CIxs219465ZAC+ASt2ZPv4Q==;EndpointSuffix=core.windows.net"
+CONTAINER_NAME = "lanternfly-images"
+
+bsc = BlobServiceClient.from_connection_string(CONNECTION_STRING)
+cc = bsc.get_container_client(CONTAINER_NAME)
+
+# Flask app setup
 app = Flask(__name__)
 
-@app.route('/api/v1/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "message": "Service is running"
-    }), 200
+@app.post("/api/v1/upload")
+def upload():
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
 
-@app.route('/api/v1/upload', methods=['POST'])
-def upload_file():
-    """File upload endpoint"""
-    try:
-        # Check if file is in request
-        if 'file' not in request.files:
-            return jsonify({
-                "error": "No file provided",
-                "status": "error"
-            }), 400
-        
-        file = request.files['file']
-        
-        if file.filename == '':
-            return jsonify({
-                "error": "No file selected",
-                "status": "error"
-            }), 400
-        
-        # Save file temporarily
-        filename = file.filename
-        file.save(filename)
-        
-        # Get file info
-        file_size = os.path.getsize(filename)
-        
-        return jsonify({
-            "status": "success",
-            "filename": filename,
-            "size": file_size,
-            "message": "File uploaded successfully",
-            "timestamp": datetime.now().isoformat()
-        }), 200
-        
-    except Exception as e:
-        return jsonify({
-            "error": str(e),
-            "status": "error"
-        }), 500
+    f = request.files["file"]
+    
+    # Upload file to blob storage
+    blob_client = cc.get_blob_client(f.filename)
+    blob_client.upload_blob(f, overwrite=True)
 
-@app.route('/', methods=['GET'])
-def home():
-    """Home endpoint"""
-    return jsonify({
-        "message": "Welcome to the API",
-        "endpoints": {
-            "health": "/api/v1/health",
-            "upload": "/api/v1/upload"
-        }
-    }), 200
+    return jsonify(ok=True, url=f"{cc.url}/{f.filename}")
 
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+@app.get("/api/v1/health")
+def health():
+    return jsonify(status="ok")
+
+@app.get("/api/v1/gallery")
+def gallery():
+    blobs = cc.list_blobs()
+    urls = [f"{cc.url}/{blob.name}" for blob in blobs]
+    return jsonify(ok=True, gallery=urls)
+
+@app.get("/")
+def index():
+    return render_template("index.html")
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
+
+
