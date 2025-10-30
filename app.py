@@ -3,7 +3,9 @@ from flask import Flask, request, jsonify, render_template
 import os
 from azure.storage.blob import BlobServiceClient, ContentSettings, PublicAccess
 from datetime import datetime
+from dotenv import load_dotenv
 
+load_dotenv()
 
 # --- super simple config (edit these two lines) ---
 CONNECTION_STRING = os.environ["AZURE_STORAGE_CONNECTION_STRING"]
