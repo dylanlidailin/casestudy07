@@ -1,9 +1,15 @@
 from flask import Flask, request, jsonify, render_template
 from azure.storage.blob import BlobServiceClient
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Azure Blob Storage setup
-CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=case7dfe4yx;AccountKey=n0sxzNZCzr7Clx5EHqDQV6tP6P5RCxyEeRu0mAD+2PGOMLWnh9gJtzyJh/T29j4CIxs219465ZAC+ASt2ZPv4Q==;EndpointSuffix=core.windows.net"
-CONTAINER_NAME = "lanternfly-images"
+#CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=case7dfe4yx;AccountKey=n0sxzNZCzr7Clx5EHqDQV6tP6P5RCxyEeRu0mAD+2PGOMLWnh9gJtzyJh/T29j4CIxs219465ZAC+ASt2ZPv4Q==;EndpointSuffix=core.windows.net"
+#CONTAINER_NAME = "lanternfly-images"
+CONNECTION_STRING = os.environ["AZURE_STORAGE_CONNECTION_STRING"]
+CONTAINER_NAME = os.environ.get("IMAGES_CONTAINER", "images-demo")
 
 bsc = BlobServiceClient.from_connection_string(CONNECTION_STRING)
 cc = bsc.get_container_client(CONTAINER_NAME)
