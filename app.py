@@ -10,7 +10,7 @@ load_dotenv()
 # --- super simple config (edit these two lines) ---
 CONNECTION_STRING = os.environ["AZURE_STORAGE_CONNECTION_STRING"]
 #CONTAINER_NAME = os.environ.get("IMAGES_CONTAINER", "lanternfly-images-pwpytpl9")
-CONTAINER_NAME = os.environ.get("IMAGES_CONTAINER", "images-demo")
+CONTAINER_NAME = os.environ.get("IMAGES_CONTAINER", "lanternfly-images-pwpytpl9")
 
 # --- blob client & container (public-read) ---
 bsc = BlobServiceClient.from_connection_string(CONNECTION_STRING)
